@@ -1,0 +1,16 @@
+127.0.0.1 ansible_connection=local
+
+[web-bridge]
+127.0.0.1 ansible_connection=local
+
+[db-secret]
+127.0.0.1 ansible_connection=local
+
+[db-app]
+127.0.0.1 ansible_connection=local
+
+[rabbit]
+127.0.0.1 ansible_connection=local
+
+[worker]
+127.0.0.1 ansible_connection=local

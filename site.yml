@@ -1,0 +1,59 @@
+---
+- hosts: web-bridge
+  tasks:
+    - name: echo hello
+      debug: hello
+
+- hosts: "db-*"
+  tasks:
+    - name: Install system packages
+      apt: name={{ item }} state=present
+      with_items:
+        - postgresql
+        - libpq-dev
+        - python-pip
+        - python-dev
+    - name: Install python packages
+      pip: name={{ item }}
+      with_items:
+        - psycopg2
+    - service: name=postgresql state=started
+
+# Create secret database and users
+- hosts: db-secret
+  sudo: yes
+  sudo_user: postgres
+  tasks:
+    - postgresql_db: name=secret
+    - postgresql_user: name=secret
+                       db=secret
+                       password=secret
+    - postgresql_privs: >
+        db=secret
+        roles=secret
+        privs=ALL
+        objs=ALL_IN_SCHEMA
+
+# Create app database and users
+- hosts: db-app
+  sudo: yes
+  sudo_user: postgres
+  tasks:
+    - postgresql_db: name=app
+    - postgresql_user: name=app
+                       db=app
+                       password=app
+    - postgresql_privs: >
+        db=app
+        roles=app
+        privs=ALL
+        objs=ALL_IN_SCHEMA
+
+- hosts: rabbit
+  tasks:
+    - apt: name=rabbitmq-server
+    - service: name=rabbitmq-server state=started
+
+- hosts: worker
+  tasks:
+    - debug: hi
