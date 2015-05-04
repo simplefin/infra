@@ -1,9 +1,7 @@
 ---
-- hosts: web-bridge
-  tasks:
-    - name: echo hello
-      debug: hello
-
+#------------------------------------------------------------------------------
+# Base installation
+#------------------------------------------------------------------------------
 - hosts: "db-*"
   tasks:
     - name: Install system packages
@@ -56,4 +54,76 @@
 
 - hosts: worker
   tasks:
-    - debug: hi
+    - name: worker user
+      user: name=worker
+            comment="Bank Access Worker"
+            append=yes
+            home=/home/worker
+    # XXX I don't like manually keeping this up to date from the Dockerfile
+    # in the bank-access repo.  Perhaps I'll convert the Dockerfile to an
+    # ansible role.
+    - name: Install system packages
+      apt: name={{ item }} state=present
+      with_items:
+        - python-dev
+        - python-virtualenv
+        - build-essential
+        - git
+        - libsqlite3-dev
+        - curl
+        - libz-dev
+        - libxml2-dev
+        - libxslt1-dev
+        - x11vnc
+        - xvfb
+        - firefox
+        - xfonts-100dpi
+        - xfonts-75dpi
+        - xfonts-scalable
+        - xfonts-cyrillic
+
+    # Xvfb
+    - name: Init xvfb
+      copy: dest=/etc/init.d/xvfb
+            src=util/xvfb.init.d
+            mode=u+x
+    - name: Start xvfb
+      service: name=xvfb state=started
+
+    # x11vnc
+    - file: path=/home/root/.vnc/passwd
+            owner=root
+            group=root
+            state=directory
+    - name: Configure x11vnc
+      command: x11vnc -storepasswd foo /home/root/.vnc/passwd
+               creates="/home/root/.vnc/passwd"
+    - name: Init x11vnc
+      copy: dest=/etc/init.d/x11vnc
+            src=util/x11vnc.init.d
+            mode=u+x
+    - name: Start x11vnc
+      service: name=x11vnc state=started
+
+#------------------------------------------------------------------------------
+# Security
+#------------------------------------------------------------------------------
+- hosts: all
+  tasks:
+    - debug: msg="placeholder"
+
+
+#------------------------------------------------------------------------------
+# Application code
+#------------------------------------------------------------------------------
+- hosts: worker
+  remote_user: worker
+  tasks:
+    - name: Get bank-access repo
+      git: repo=https://github.com/simplefin/bank-access.git
+           dest=/home/worker/bank-access
+           version=master
+    - name: Upgrade python dependencies
+      pip: virtualenv=/home/worker/venv
+           requirements=/home/worker/bank-access/requirements.txt
+
