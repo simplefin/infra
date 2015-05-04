@@ -137,13 +137,23 @@
 # Application code
 #==============================================================================
 - hosts: worker
-  remote_user: worker
+  vars:
+    virtualenv: /home/worker/venv
+    banka_dir: /home/worker/bank-access
+  sudo: yes
+  sudo_user: worker
   tasks:
     - name: Get bank-access repo
       git: repo=https://github.com/simplefin/bank-access.git
-           dest=/home/worker/bank-access
+           dest={{ banka_dir }}
            version=master
+    - name: Upgrade pip
+      pip: virtualenv={{ virtualenv }}
+           name=pip
+           version=6.0.8
     - name: Upgrade python dependencies
-      pip: virtualenv=/home/worker/venv
-           requirements=/home/worker/bank-access/requirements.txt
+      async: 1000
+      poll: 10
+      pip: virtualenv={{ virtualenv }}
+           requirements={{ banka_dir }}/requirements.txt
 
