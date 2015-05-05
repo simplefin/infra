@@ -121,17 +121,6 @@
     - name: Start x11vnc
       service: name=x11vnc state=started
 
-#==============================================================================
-# Security
-#==============================================================================
-# - hosts: all
-#   tasks:
-#     - name: Firewall | install ufw 
-#       apt: name=ufw state=present
-#       tags: security
-#     - ufw: state=enabled policy=allow
-#       tags: security
-
 
 #==============================================================================
 # Application code
